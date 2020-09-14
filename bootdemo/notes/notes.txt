@@ -1,0 +1,8 @@
+Course:
+https://www.udemy.com/course/apache-kafka-for-developers-using-springboot/
+
+git:
+https://github.com/dilipsundarraj1/kafka-for-developers-using-spring-boot
+
+------------------------------------------------------------------------------------------------------------------------
+
