@@ -9,26 +9,31 @@ https://github.com/dilipsundarraj1/kafka-for-developers-using-spring-boot
 docker run -d  --net=host  --name=kafka  -e KAFKA_ZOOKEEPER_CONNECT=localhost:32181  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:29092  -e KAFKA_BROKER_ID=2  -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1  confluentinc/cp-kafka:5.5.1
 
 
+------------------------------------------------------------------------------------------------------------------------
 
+installer commands VS docker commands:
+docker link: https://kafka-tutorials.confluent.io/kafka-console-consumer-producer-basics/kafka.html
+commands link: https://github.com/dilipsundarraj1/kafka-for-developers-using-spring-boot/blob/master/SetUpKafka.md
 
+--
+How to create a topic ?
+--
+    ./kafka-topics.sh                       --create --topic test-topic -zookeeper localhost:2181 --replication-factor 1 --partitions 4
 
---------------------------------------------------------
-approximate moving list
---------------------------------------------------------
-1 single bed
-1 double mattress
-1 double gadda
-12-15 pots plants, small size plants
-4 5 suitcases full of clothes etc
-3 rucksacks
-7-8 shoes
-1 packed gas stove
-1 packed desktop
-7-8 big cardboard boxes
-1 folding table
-2 plastic chairs
-2 3 plastic buckets, mops
+    docker-compose exec broker kafka-topics --create --topic test-topic --bootstrap-server broker:9092 --replication-factor 1 --partitions 1
 
+--
+How to instantiate a Console Producer?
+--
+    ./kafka-console-producer.sh             --topic test-topic --broker-list localhost:9092
 
+    docker-compose exec broker bash
+    kafka-console-producer                  --topic test-topic --broker-list broker:9092
 
-contacted:
+--
+How to instantiate a Console Consumer?
+--
+    ./kafka-console-consumer.sh     --topic test-topic --bootstrap-server localhost:9092 --from-beginning
+
+    docker-compose exec broker bash
+    kafka-console-consumer          --topic test-topic --bootstrap-server broker:9092
