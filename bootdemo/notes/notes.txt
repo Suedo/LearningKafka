@@ -8,6 +8,64 @@ https://github.com/dilipsundarraj1/kafka-for-developers-using-spring-boot
 
 docker run -d  --net=host  --name=kafka  -e KAFKA_ZOOKEEPER_CONNECT=localhost:32181  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:29092  -e KAFKA_BROKER_ID=2  -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1  confluentinc/cp-kafka:5.5.1
 
+------------------------------------------------------------------------------------------------------------------------
+Some important properties (with some standard defaults) for configuration:
+------------------------------------------------------------------------------------------------------------------------
+https://www.youtube.com/watch?v=SxHsnNYxcww
+https://zookeeper.apache.org/doc/r3.6.1/zookeeperStarted.html
+
+
+    Zookeeper:
+
+        1. ticktime: 2000
+            the basic time unit in milliseconds used by ZooKeeper. It is used to do heartbeats and the minimum session timeout will be twice the tickTime.
+
+        2. initlimit: 5
+            limit the length of time, in `ticks` the ZooKeeper servers in quorum have to connect to a leader
+            in other words, time in ticks a zookeeper follower takes to connect to a zookeeper leader initially when a cluster is started
+
+        3. syncLimit: 2
+            limits how far (in ticks) out of date a server can be from a leader.
+            In other words, it's the time limit a follower has to sync with the leader
+
+        4. server.X=localhost:port1:port2
+        EX:
+            server.1=localhost:2888:3888
+            server.2=localhost:2888:3888
+            server.3=localhost:2888:3888
+
+            port1 is used for zookeeper node peer communication, to agree upon the order of updates etc.
+            port2 is used for leader election
+            If these zookeeper nodes are deployed on different boxes, the ports can be the same, with localhost replaced with ip
+
+        5. clientPort: 2181
+            the port to listen for client connections, ie This is the port to which clients (like kafka) will connect to
+
+
+How Kafka n Zookeeper communicate:
+------------------------------------------------
+https://stackoverflow.com/a/54015863/2715083
+^^ Answer by Gwen Shapira, Kafka Product Manager @ Confluent
+
+Apache Kafka vs Cofluent Kafka
+------------------------------------------------
+https://stackoverflow.com/a/39709900/2715083
+^^ Answer by Gwen Shapira, Kafka Product Manager @ Confluent
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+    Zookeeper Ensemble
+------------------------------------------------------------------------------------------------------------------------
+https://www.youtube.com/watch?v=SxHsnNYxcww
+
+Zookeeper maintains the entire Kafka cluster, so to prevent single point of failure, zookeeper also needs to be setup
+with multiple nodes. The collection of zookeeper nodes is known as a zookeeper ensemble.
+
+Concept of Quorum in zookeeper ensemble:
+1. Advisable to have odd number of zookeeper node, it is more fault tolerant (?)
+2. Nodes needed for quorum: CEIL(n/2), where n == total number of nodes in zookeeper
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -37,3 +95,33 @@ How to instantiate a Console Consumer?
 
     docker-compose exec broker bash
     kafka-console-consumer          --topic test-topic --bootstrap-server broker:9092
+
+
+kafka-topics --zookeeper localhost:2181 --describe
+kafka-topics --zookeeper localhost:2181 --list
+
+------------------------------------------------------------------------------------------------------------------------
+Udemy Course instuctions translated to docker
+------------------------------------------------------------------------------------------------------------------------
+
+./kafka-topics.sh --create --topic test-topic -zookeeper localhost:2181 --replication-factor 1 --partitions 4
+
+./kafka-console-producer.sh --broker-list localhost:9092 --topic test-topic
+./kafka-console-producer.sh --broker-list localhost:9092 --topic test-topic --property "key.separator=-" --property "parse.key=true"
+
+./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-topic --from-beginning
+./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-topic --from-beginning -property "key.separator= - " --property "print.key=true"
+
+./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test-topic --group <group-name>
+
+------------------------------------------------------------------------------------------------------------------------
+Kafka Listeners – Explained : https://www.confluent.io/blog/kafka-listeners-explained/
+------------------------------------------------------------------------------------------------------------------------
+
+Apache Kafka is a distributed system. Data is read from and written to the leader for a given partition, which could be
+on any of the brokers in a cluster. When a client (producer/consumer) starts, it will request metadata about which
+broker is the leader for a partition—and it can do this from any broker. The metadata returned will include the
+endpoints available for the Leader broker for that partition, and the client will then use those endpoints to connect to
+the broker to read/write data as required
+
+
