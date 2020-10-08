@@ -15,31 +15,31 @@ https://www.youtube.com/watch?v=SxHsnNYxcww
 https://zookeeper.apache.org/doc/r3.6.1/zookeeperStarted.html
 
 
-    Zookeeper:
+Zookeeper:
 
-        1. ticktime: 2000
-            the basic time unit in milliseconds used by ZooKeeper. It is used to do heartbeats and the minimum session timeout will be twice the tickTime.
+    1. ticktime: 2000
+        the basic time unit in milliseconds used by ZooKeeper. It is used to do heartbeats and the minimum session timeout will be twice the tickTime.
 
-        2. initlimit: 5
-            limit the length of time, in `ticks` the ZooKeeper servers in quorum have to connect to a leader
-            in other words, time in ticks a zookeeper follower takes to connect to a zookeeper leader initially when a cluster is started
+    2. initlimit: 5
+        limit the length of time, in `ticks` the ZooKeeper servers in quorum have to connect to a leader
+        in other words, time in ticks a zookeeper follower takes to connect to a zookeeper leader initially when a cluster is started
 
-        3. syncLimit: 2
-            limits how far (in ticks) out of date a server can be from a leader.
-            In other words, it's the time limit a follower has to sync with the leader
+    3. syncLimit: 2
+        limits how far (in ticks) out of date a server can be from a leader.
+        In other words, it's the time limit a follower has to sync with the leader
 
-        4. server.X=localhost:port1:port2
-        EX:
-            server.1=localhost:2888:3888
-            server.2=localhost:2888:3888
-            server.3=localhost:2888:3888
+    4. server.X=localhost:port1:port2
+    EX:
+        server.1=localhost:2888:3888
+        server.2=localhost:2888:3888
+        server.3=localhost:2888:3888
 
-            port1 is used for zookeeper node peer communication, to agree upon the order of updates etc.
-            port2 is used for leader election
-            If these zookeeper nodes are deployed on different boxes, the ports can be the same, with localhost replaced with ip
+        port1 is used for zookeeper node peer communication, to agree upon the order of updates etc.
+        port2 is used for leader election
+        If these zookeeper nodes are deployed on different boxes, the ports can be the same, with localhost replaced with ip
 
-        5. clientPort: 2181
-            the port to listen for client connections, ie This is the port to which clients (like kafka) will connect to
+    5. clientPort: 2181
+        the port to listen for client connections, ie This is the port to which clients (like kafka) will connect to
 
 
 How Kafka n Zookeeper communicate:
@@ -52,6 +52,17 @@ Apache Kafka vs Cofluent Kafka
 https://stackoverflow.com/a/39709900/2715083
 ^^ Answer by Gwen Shapira, Kafka Product Manager @ Confluent
 
+
+Listeners:
+https://www.confluent.io/blog/kafka-listeners-explained/
+
+> listeners : is what the broker will use to create server sockets.
+> advertised.listeners : is what clients will use to connect to the brokers.
+    https://stackoverflow.com/a/43000344/2715083
+
+
+Bootstrap Servers:
+    From a kafka client (producer/consumer) pov, bootstrap servers are the brokers it will connect to
 
 
 
@@ -125,3 +136,19 @@ endpoints available for the Leader broker for that partition, and the client wil
 the broker to read/write data as required
 
 
+------------------------------------------------------------------------------------------------------------------------
+Behind the scenes: KafkaTemplate.send()
+------------------------------------------------------------------------------------------------------------------------
+
+1. send()
+2.     key.serializer, value.serializer
+3.         DefaultPartitioner
+4.             RecordAccumulator
+                > #RecordBatch == #TopicPartition (helps parallelization)
+                > Each RecordBatch has a batch.size
+                > RecordAccumulator has an overall buffer.memory (bytes)
+
+Conditions for which messages are sent to Kafka Topic:
+> RecordBatch is full
+> if RecordBatch is taking time to fill, linger.ms time will be waited, and then sent whatever amount of messages has accumulated
+    https://docs.confluent.io/current/installation/configuration/producer-configs.html#linger.ms
