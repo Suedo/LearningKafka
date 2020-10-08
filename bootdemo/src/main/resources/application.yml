@@ -1,2 +1,23 @@
+spring:
+  profiles:
+    active: local
+---
 server:
-  port: 8081
+  port: 8899
+logging:
+  level:
+    org.springframework: debug
+    org.kafka: debug
+spring:
+  profiles:
+    - local
+  kafka:
+    template:
+      default-topic: library-events
+    producer:
+      bootstrap-servers: 'localhost:29092,localhost:29093,localhost:29094'
+      key-serializer: org.apache.kafka.common.serialization.IntegerSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    admin:
+      properties:
+        bootstrap.servers: 'localhost:29092,localhost:29093,localhost:29094'

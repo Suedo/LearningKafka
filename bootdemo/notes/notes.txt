@@ -152,3 +152,11 @@ Conditions for which messages are sent to Kafka Topic:
 > RecordBatch is full
 > if RecordBatch is taking time to fill, linger.ms time will be waited, and then sent whatever amount of messages has accumulated
     https://docs.confluent.io/current/installation/configuration/producer-configs.html#linger.ms
+
+
+------------------------------------------------------------------------------------------------------------------------
+Creating a Topic programatically (not recommended for production
+------------------------------------------------------------------------------------------------------------------------
+Requires:
+    1. @Bean of KafkaAdmin
+    2. @Bean of NewTopic
