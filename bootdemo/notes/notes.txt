@@ -164,3 +164,19 @@ https://stackoverflow.com/a/39709900/2715083
 
 Testing:
     When using lombok, rebuild project before testing as otherwise some generated getters and setters might not reflect in the test
+
+------------------------------------------------------------------------------------------------------------------------
+Kafka Producer Config
+------------------------------------------------------------------------------------------------------------------------
+
+Acks:
+    0 - none
+    1 - leader only
+    all - leader + all replicas, same as -1
+
+Retries: 0 - to - 2147483647
+    2147483647 == MAX value, is the default value in spring
+
+retry.backoff.ms : 100 ms by default
+
+
