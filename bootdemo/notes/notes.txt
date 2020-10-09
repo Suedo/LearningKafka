@@ -9,14 +9,13 @@ https://github.com/dilipsundarraj1/kafka-for-developers-using-spring-boot
 docker run -d  --net=host  --name=kafka  -e KAFKA_ZOOKEEPER_CONNECT=localhost:32181  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:29092  -e KAFKA_BROKER_ID=2  -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1  confluentinc/cp-kafka:5.5.1
 
 ------------------------------------------------------------------------------------------------------------------------
-Some important properties (with some standard defaults) for configuration:
+Zookeeper:
 ------------------------------------------------------------------------------------------------------------------------
 https://www.youtube.com/watch?v=SxHsnNYxcww
 https://zookeeper.apache.org/doc/r3.6.1/zookeeperStarted.html
 
-
-Zookeeper:
-
+Some important properties (with some standard defaults) for configuration:
+------------------------------------------
     1. ticktime: 2000
         the basic time unit in milliseconds used by ZooKeeper. It is used to do heartbeats and the minimum session timeout will be twice the tickTime.
 
@@ -41,31 +40,6 @@ Zookeeper:
     5. clientPort: 2181
         the port to listen for client connections, ie This is the port to which clients (like kafka) will connect to
 
-
-How Kafka n Zookeeper communicate:
-------------------------------------------------
-https://stackoverflow.com/a/54015863/2715083
-^^ Answer by Gwen Shapira, Kafka Product Manager @ Confluent
-
-Apache Kafka vs Cofluent Kafka
-------------------------------------------------
-https://stackoverflow.com/a/39709900/2715083
-^^ Answer by Gwen Shapira, Kafka Product Manager @ Confluent
-
-
-Listeners:
-https://www.confluent.io/blog/kafka-listeners-explained/
-
-> listeners : is what the broker will use to create server sockets.
-> advertised.listeners : is what clients will use to connect to the brokers.
-    https://stackoverflow.com/a/43000344/2715083
-
-
-Bootstrap Servers:
-    From a kafka client (producer/consumer) pov, bootstrap servers are the brokers it will connect to
-
-
-
 ------------------------------------------------------------------------------------------------------------------------
     Zookeeper Ensemble
 ------------------------------------------------------------------------------------------------------------------------
@@ -79,37 +53,49 @@ Concept of Quorum in zookeeper ensemble:
 2. Nodes needed for quorum: CEIL(n/2), where n == total number of nodes in zookeeper
 
 ------------------------------------------------------------------------------------------------------------------------
+Listeners:
+------------------------------------------------------------------------------------------------------------------------
 
+https://www.confluent.io/blog/kafka-listeners-explained/
+
+> listeners : is what the broker will use to create server sockets.
+> advertised.listeners : is what clients will use to connect to the brokers.
+    https://stackoverflow.com/a/43000344/2715083
+
+------------------------------------------------------------------------------------------------------------------------
+Bootstrap Servers:
+------------------------------------------------------------------------------------------------------------------------
+    From a kafka client (producer/consumer) pov, bootstrap servers are the brokers it will connect to
+
+------------------------------------------------------------------------------------------------------------------------
 installer commands VS docker commands:
+------------------------------------------------------------------------------------------------------------------------
 docker link: https://kafka-tutorials.confluent.io/kafka-console-consumer-producer-basics/kafka.html
 commands link: https://github.com/dilipsundarraj1/kafka-for-developers-using-spring-boot/blob/master/SetUpKafka.md
 
---
-How to create a topic ?
---
-    ./kafka-topics.sh                       --create --topic test-topic -zookeeper localhost:2181 --replication-factor 1 --partitions 4
+    How to create a topic ?
+    ------------------------------------------
+        ./kafka-topics.sh                       --create --topic test-topic -zookeeper localhost:2181 --replication-factor 1 --partitions 4
 
-    docker-compose exec broker kafka-topics --create --topic test-topic --bootstrap-server broker:9092 --replication-factor 1 --partitions 1
+        docker-compose exec broker kafka-topics --create --topic test-topic --bootstrap-server broker:9092 --replication-factor 1 --partitions 1
 
---
-How to instantiate a Console Producer?
---
-    ./kafka-console-producer.sh             --topic test-topic --broker-list localhost:9092
+    How to instantiate a Console Producer?
+    ------------------------------------------
+        ./kafka-console-producer.sh             --topic test-topic --broker-list localhost:9092
 
-    docker-compose exec broker bash
-    kafka-console-producer                  --topic test-topic --broker-list broker:9092
+        docker-compose exec broker bash
+        kafka-console-producer                  --topic test-topic --broker-list broker:9092
 
---
-How to instantiate a Console Consumer?
---
-    ./kafka-console-consumer.sh     --topic test-topic --bootstrap-server localhost:9092 --from-beginning
+    How to instantiate a Console Consumer?
+    ------------------------------------------
+        ./kafka-console-consumer.sh     --topic test-topic --bootstrap-server localhost:9092 --from-beginning
 
-    docker-compose exec broker bash
-    kafka-console-consumer          --topic test-topic --bootstrap-server broker:9092
+        docker-compose exec broker bash
+        kafka-console-consumer          --topic test-topic --bootstrap-server broker:9092
 
 
-kafka-topics --zookeeper localhost:2181 --describe
-kafka-topics --zookeeper localhost:2181 --list
+    kafka-topics --zookeeper localhost:2181 --describe
+    kafka-topics --zookeeper localhost:2181 --list
 
 ------------------------------------------------------------------------------------------------------------------------
 Udemy Course instuctions translated to docker
@@ -160,3 +146,21 @@ Creating a Topic programatically (not recommended for production
 Requires:
     1. @Bean of KafkaAdmin
     2. @Bean of NewTopic
+
+------------------------------------------------------------------------------------------------------------------------
+Misc
+------------------------------------------------------------------------------------------------------------------------
+
+How Kafka n Zookeeper communicate:
+------------------------------------------------
+https://stackoverflow.com/a/54015863/2715083
+^^ Answer by Gwen Shapira, Kafka Product Manager @ Confluent
+
+Apache Kafka vs Cofluent Kafka
+------------------------------------------------
+https://stackoverflow.com/a/39709900/2715083
+^^ Answer by Gwen Shapira, Kafka Product Manager @ Confluent
+
+
+Testing:
+    When using lombok, rebuild project before testing as otherwise some generated getters and setters might not reflect in the test
