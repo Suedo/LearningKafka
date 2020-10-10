@@ -17,6 +17,7 @@ import org.springframework.kafka.listener.ContainerProperties;
 public class LibraryEventsConsumerConfig {
 
     private final KafkaProperties properties = new KafkaProperties();
+    private final int numOfPartions = 3;
 
     // we want ack mode to be manual, so we need to override kafkaListenerContainerFactory from KafkaAnnotationDrivenConfiguration class
     @Bean
@@ -27,6 +28,7 @@ public class LibraryEventsConsumerConfig {
             return new DefaultKafkaConsumerFactory(this.properties.buildConsumerProperties());
         }));
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+        factory.setConcurrency(numOfPartions); // concurrent mode, not useful in cloud based kafka running in kubernetes etc
         return factory;
     }
 }
