@@ -5,7 +5,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-@Component
+//@Component // in favor of LibraryEventsConsumerManualOffset
 @Log4j2
 public class LibraryEventsConsumer {
 
