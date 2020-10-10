@@ -160,3 +160,11 @@ Creating a Topic programatically (not recommended for production
 Requires:
     1. @Bean of KafkaAdmin
     2. @Bean of NewTopic
+
+
+------------------------------------------------------------------------------------------------------------------------
+Consumer up, log obtained after producing on record
+------------------------------------------------------------------------------------------------------------------------
+
+ c.k.b.producer.LibraryEventProducer      : Message sent successfully for key null with value {"libraryEventId":null,"book":{"bookId":456,"bookName":"Kafka Using Spring Boot","bookAuthor":"Dilip"}}, in partition: 0
+ c.k.b.consumer.LibraryEventsConsumer     : Consumer Record: ConsumerRecord(topic = library-events, partition = 0, leaderEpoch = 0, offset = 0, CreateTime = 1602299751365, serialized key size = -1, serialized value size = 103, headers = RecordHeaders(headers = [], isReadOnly = false), key = null, value = {"libraryEventId":null,"book":{"bookId":456,"bookName":"Kafka Using Spring Boot","bookAuthor":"Dilip"}})

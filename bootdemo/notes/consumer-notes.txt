@@ -1,0 +1,85 @@
+------------------------------------------------------------------------------------------------------------------------
+Console consumer options
+------------------------------------------------------------------------------------------------------------------------
+root@broker:/# kafka-console-consumer --h
+Option                                                                                         Description
+------                                                                                         -----------
+--bootstrap-server <String: server to connect to>   REQUIRED: The server(s) to connect to.
+--consumer-property <String: consumer_prop>         A mechanism to pass user-defined properties in the form key=value to the consumer.
+--consumer.config <String: config file>             Consumer config properties file. Note that [consumer-property] takes precedence over this config.
+--enable-systest-events                             Log lifecycle events of the consumer in addition to logging consumed messages. (This is specific for system tests.)
+--formatter <String: class>                         The name of a class to use for formatting kafka messages for display. (default: kafka.tools. DefaultMessageFormatter)
+--from-beginning                                    If the consumer does not already have an established offset to consume from, start with the earliest message present in the log rather than the latest message.
+--group <String: consumer group id>                 The consumer group id of the consumer.
+--help   Print usage information.
+--isolation-level <String>                          Set to read_committed in order to filter out transactional messages which are not committed. Set to read_uncommitted to read all messages. (default: read_uncommitted)
+--key-deserializer <String: deserializer for key>
+--max-messages <Integer: num_messages>              The maximum number of messages to consume before exiting. If not set, consumption is continual.
+--offset <String: consume offset>                   The offset id to consume from (a non- negative number), or 'earliest' which means from beginning, or 'latest' which means from end (default: latest)
+--partition <Integer: partition>                    The partition to consume from. Consumption starts from the end of the partition unless '--offset' is specified.
+--property <String: prop>                           The properties to initialize the message formatter. Default properties include:
+                                                      print.timestamp=true|false
+                                                      print.key=true|false
+                                                      print.value=true|false
+                                                      key.separator=<key.separator>
+                                                      line.separator=<line.separator>
+                                                      key.deserializer=<key.deserializer>
+                                                      value.deserializer=<value. deserializer>
+                                                      Users can also pass in customized properties for their formatter; more specifically, users can pass in properties keyed with 'key. deserializer.' and 'value. deserializer.' prefixes to configure their deserializers.
+--skip-message-on-error                             If there is an error when processing a message, skip it instead of halt.
+--timeout-ms <Integer: timeout_ms>                  If specified, exit if no message is available for consumption for the specified interval.
+--topic <String: topic>                             The topic id to consume on.
+--value-deserializer <String: deserializer for values>
+--versionDisplay Kafka version.
+--whitelist <String: whitelist>                     Regular expression specifying whitelist of topics to include for consumption.
+
+------------------------------------------------------------------------------------------------------------------------
+ Checklist before startup of kafka consumer app
+------------------------------------------------------------------------------------------------------------------------
+
+1. Make sure to (obviously) start the kafka services, zookeeper + brokers in your machine. for me its done via:
+    > docker-compose up  # on the root directory
+
+2. Create the topic with the right amount of partitions. I do it via docker. terminal commands and outputs pasted below:
+
+    > docker-compose exec broker bash                                                                                                                                                                                           @8:16:15
+    > root@broker:/# kafka-topics --create --topic library-events --bootstrap-server broker:9092 --replication-factor 3 --partitions 3
+    > Created topic library-events.
+
+
+------------------------------------------------------------------------------------------------------------------------
+ Checking proper startup
+------------------------------------------------------------------------------------------------------------------------
+
+When starting a spring-boot app with consumer configured, check near the end of the logs for something like:
+
+    2020-10-10 08:17:34.370  INFO 27059 --- [  restartedMain] c.k.bootdemo.BootKafkaDemoApplication    : Started BootKafkaDemoApplication in 3.434 seconds (JVM running for 4.117)
+    2020-10-10 08:17:34.373 DEBUG 27059 --- [  restartedMain] o.s.boot.devtools.restart.Restarter      : Creating new Restarter for thread Thread[main,5,main]
+    2020-10-10 08:17:34.373 DEBUG 27059 --- [  restartedMain] o.s.boot.devtools.restart.Restarter      : Immediately restarting application
+    2020-10-10 08:17:34.373 DEBUG 27059 --- [  restartedMain] o.s.boot.devtools.restart.Restarter      : Created RestartClassLoader org.springframework.boot.devtools.restart.classloader.RestartClassLoader@9c7a0be
+    2020-10-10 08:17:34.373 DEBUG 27059 --- [  restartedMain] o.s.boot.devtools.restart.Restarter      : Starting application com.kafka.bootdemo.BootKafkaDemoApplication with URLs [file:/Users/somjit.nag/Documents/github/Suedo/Spring/LearningKafka/bootdemo/target/classes/]
+    2020-10-10 08:17:34.651  INFO 27059 --- [ntainer#0-0-C-1] org.apache.kafka.clients.Metadata        : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Cluster ID: 7xRDrklAR3q4oWsDRSx8nQ
+    2020-10-10 08:17:35.470  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.AbstractCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Discovered group coordinator localhost:29093 (id: 2147483645 rack: null)
+    2020-10-10 08:17:35.473  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.AbstractCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] (Re-)joining group
+    2020-10-10 08:17:35.516  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.AbstractCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Join group failed with org.apache.kafka.common.errors.MemberIdRequiredException: The group member needs to have a valid member id before actually entering a consumer group
+    2020-10-10 08:17:35.516  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.AbstractCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] (Re-)joining group
+    2020-10-10 08:17:35.584  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Finished assignment for group at generation 1: {consumer-library-events-listener-group-1-2ec8a2fb-05fc-40ea-a3b0-5d2d20afb16b=Assignment(partitions=[library-events-0, library-events-1, library-events-2])}
+    2020-10-10 08:17:35.628  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.AbstractCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Successfully joined group with generation 1
+    2020-10-10 08:17:35.631  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Adding newly assigned partitions: library-events-1, library-events-2, library-events-0
+    2020-10-10 08:17:35.647  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Found no committed offset for partition library-events-1
+    2020-10-10 08:17:35.648  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Found no committed offset for partition library-events-2
+    2020-10-10 08:17:35.648  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Found no committed offset for partition library-events-0
+    2020-10-10 08:17:35.656  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Found no committed offset for partition library-events-1
+    2020-10-10 08:17:35.656  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Found no committed offset for partition library-events-2
+    2020-10-10 08:17:35.656  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Found no committed offset for partition library-events-0
+    2020-10-10 08:17:35.677  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.SubscriptionState    : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Resetting offset for partition library-events-1 to offset 0.
+    2020-10-10 08:17:35.688  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.SubscriptionState    : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Resetting offset for partition library-events-2 to offset 0.
+    2020-10-10 08:17:35.693  INFO 27059 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.SubscriptionState    : [Consumer clientId=consumer-library-events-listener-group-1, groupId=library-events-listener-group] Resetting offset for partition library-events-0 to offset 0.
+    2020-10-10 08:17:35.695 DEBUG 27059 --- [ntainer#0-0-C-1] essageListenerContainer$ListenerConsumer : Committing on assignment: {library-events-1=OffsetAndMetadata{offset=0, leaderEpoch=null, metadata=''}, library-events-2=OffsetAndMetadata{offset=0, leaderEpoch=null, metadata=''}, library-events-0=OffsetAndMetadata{offset=0, leaderEpoch=null, metadata=''}}
+    2020-10-10 08:17:35.798  INFO 27059 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : library-events-listener-group: partitions assigned: [library-events-1, library-events-2, library-events-0]
+
+Very simply, one of the last lines:
+
+    library-events-listener-group: partitions assigned: [library-events-1, library-events-2, library-events-0]
+
+    ^^ indicates that our kafka consumer was successfully able to connect to our brokers and partitions.
