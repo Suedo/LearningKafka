@@ -2,7 +2,6 @@ package com.kafka.bootdemo.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kafka.bootdemo.domain.Book;
 import com.kafka.bootdemo.domain.LibraryEvent;
 import com.kafka.bootdemo.repository.LibraryEventRepository;
 import lombok.extern.log4j.Log4j2;
@@ -10,6 +9,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 
 @Service
@@ -30,16 +31,20 @@ public class LibraryEventService {
         LibraryEvent libraryEvent = objectMapper.readValue(consumerRecord.value(), LibraryEvent.class); // deserialize
         log.info("LibraryEvent consumed: {}", libraryEvent);
 
-        switch (libraryEvent.getType()){
+        switch (libraryEvent.getType()) {
             case NEW:
                 save(libraryEvent);
                 break;
             case UPDATE:
-                // update
+                update(libraryEvent);
                 break;
             default:
                 log.info("Invalid Library Event");
         }
+    }
+
+    public List<LibraryEvent> findAll() {
+        return repository.findAll();
     }
 
     private LibraryEvent save(LibraryEvent libraryEvent) {
@@ -47,5 +52,20 @@ public class LibraryEventService {
         LibraryEvent savedLibraryEvent = repository.save(libraryEvent);
         log.info("Successfully saved library event: {}", savedLibraryEvent);
         return savedLibraryEvent;
+    }
+
+    private LibraryEvent update(LibraryEvent libraryEvent) {
+        if (libraryEvent.getLibraryEventId() == null) throw new IllegalArgumentException("Id not provided");
+
+        LibraryEvent updates = repository.findById(libraryEvent.getLibraryEventId()).map(l -> {
+            l.getBook().setBookName(libraryEvent.getBook().getBookName());
+            l.getBook().setBookAuthor(libraryEvent.getBook().getBookAuthor());
+            return l;
+        }).orElseThrow(() -> new IllegalArgumentException("Cannot find library event for the given id" + libraryEvent.getLibraryEventId()));
+
+        LibraryEvent savedUpdates = repository.save(updates);
+        log.info("Successfully saved updated library event: {}", savedUpdates);
+        return savedUpdates;
+
     }
 }
