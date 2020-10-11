@@ -26,7 +26,7 @@ public class LibraryEventResource {
     LibraryEventService libraryEventService;
 
     @PostMapping(path = "/add")
-    public ResponseEntity<LibraryEvent> addBookToLibrary(@Valid @RequestBody LibraryEvent libraryEvent) throws JsonProcessingException {
+    public ResponseEntity addBookToLibrary(@Valid @RequestBody LibraryEvent libraryEvent) throws JsonProcessingException {
 
         libraryEvent.setType(LibraryEventType.NEW);
         libraryEventProducer.sendLibraryEventV2(libraryEvent);
@@ -34,10 +34,10 @@ public class LibraryEventResource {
     }
 
     @PutMapping(path = "/update")
-    public ResponseEntity<LibraryEvent> updateLibraryBook(@Valid @RequestBody LibraryEvent libraryEvent) throws JsonProcessingException {
+    public ResponseEntity updateLibraryBook(@Valid @RequestBody LibraryEvent libraryEvent) throws JsonProcessingException {
 
         if (libraryEvent.getLibraryEventId() == null) {
-            return ResponseEntity.badRequest().body(libraryEvent);
+            return ResponseEntity.badRequest().body("Please provide Id of Lib");
         }
         libraryEvent.setType(LibraryEventType.UPDATE);
         libraryEventProducer.sendLibraryEventV2(libraryEvent);

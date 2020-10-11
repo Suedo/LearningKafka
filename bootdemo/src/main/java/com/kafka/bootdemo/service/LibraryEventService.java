@@ -61,7 +61,7 @@ public class LibraryEventService {
             l.getBook().setBookName(libraryEvent.getBook().getBookName());
             l.getBook().setBookAuthor(libraryEvent.getBook().getBookAuthor());
             return l;
-        }).orElseThrow(() -> new IllegalArgumentException("Cannot find library event for the given id" + libraryEvent.getLibraryEventId()));
+        }).orElseThrow(() -> new IllegalArgumentException("Cannot find library event for the given id: " + libraryEvent.getLibraryEventId()));
 
         LibraryEvent savedUpdates = repository.save(updates);
         log.info("Successfully saved updated library event: {}", savedUpdates);
