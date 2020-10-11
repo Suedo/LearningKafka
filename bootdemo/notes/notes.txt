@@ -197,3 +197,14 @@ Saving Kafka consumer read messages into a DB
 The onMessage handler receives a ConsumerRecord. ConsumerRecord.value() holds the serialized payload/message.
     Use Jackson ObjectMapper to read the message into a Domain Model
         persist the domain model using JPA save method
+
+Imp: sample library event post body:
+
+    {
+        "book": {
+            "bookName": "Kafka Using Spring Boot",
+            "bookAuthor": "Dilip"
+        }
+    }
+
+Notice that neither has any ID, (earlier, before introducing persistence, it did have id). Keeping id will lead to failures, or extra rows additions

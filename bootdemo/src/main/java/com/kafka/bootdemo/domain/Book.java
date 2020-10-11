@@ -25,8 +25,9 @@ public class Book {
     @NotBlank
     private String bookAuthor;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "library_event_id")
+    //    @OneToOne(cascade = CascadeType.ALL)
+    //    @JoinColumn(name = "library_event_id")
+    @OneToOne(mappedBy = "book", cascade = CascadeType.ALL)
     private LibraryEvent libraryEvent;
 
 }
