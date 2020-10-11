@@ -28,7 +28,7 @@ public class LibraryEventsConsumerConfig {
             return new DefaultKafkaConsumerFactory(this.properties.buildConsumerProperties());
         }));
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
-        factory.setConcurrency(numOfPartions); // concurrent mode, not useful in cloud based kafka running in kubernetes etc
+        // factory.setConcurrency(numOfPartions); // concurrent mode, not useful in cloud based kafka running in kubernetes etc
         return factory;
     }
 }

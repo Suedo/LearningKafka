@@ -13,6 +13,23 @@ server:
 spring:
   profiles:
     - local
+  datasource:
+    url: jdbc:postgresql:kafkaone
+    username: postgres
+    password: postgres
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    generate-ddl: true
+    hibernate:
+      #      naming:
+      #        physical-strategy: com.devsubho.backend.utilities.CustomPhysicalNamingStrategy
+      ddl-auto: create
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    show-sql: true
   kafka:
     template:
       default-topic: library-events
