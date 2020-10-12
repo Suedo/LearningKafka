@@ -12,11 +12,13 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 
+import static com.kafka.bootdemo.config.ConfigHelper.retryTemplate;
+
 @Configuration
 @EnableKafka
 public class LibraryEventsConsumerConfig {
 
-    private final KafkaProperties properties = new KafkaProperties();
+    private final KafkaProperties properties = new KafkaProperties(); // contains application.yml configs
     private final int numOfPartions = 3;
 
     // we want ack mode to be manual, so we need to override kafkaListenerContainerFactory from KafkaAnnotationDrivenConfiguration class
@@ -27,8 +29,12 @@ public class LibraryEventsConsumerConfig {
         configurer.configure(factory, kafkaConsumerFactory.getIfAvailable(() -> {
             return new DefaultKafkaConsumerFactory(this.properties.buildConsumerProperties());
         }));
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         // factory.setConcurrency(numOfPartions); // concurrent mode, not useful in cloud based kafka running in kubernetes etc
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+
+        factory.setRetryTemplate(retryTemplate());
+
         return factory;
     }
+
 }
