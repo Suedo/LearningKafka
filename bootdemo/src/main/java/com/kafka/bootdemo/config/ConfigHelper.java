@@ -1,9 +1,13 @@
 package com.kafka.bootdemo.config;
 
+import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.retry.RetryPolicy;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ConfigHelper {
 
@@ -20,8 +24,12 @@ public class ConfigHelper {
     }
 
     private static RetryPolicy simpleRetryPolicy() {
-        SimpleRetryPolicy simpleRetryPolicy = new SimpleRetryPolicy();
-        simpleRetryPolicy.setMaxAttempts(3);
+
+        Map<Class<? extends Throwable>, Boolean> exceptionsMap = new HashMap<>();
+        exceptionsMap.put(IllegalArgumentException.class, false); // don't retry
+        exceptionsMap.put(RecoverableDataAccessException.class, true); // do retry, 3 times, then fail/throw exception
+
+        SimpleRetryPolicy simpleRetryPolicy = new SimpleRetryPolicy(3, exceptionsMap, true);
         return simpleRetryPolicy;
     }
 }

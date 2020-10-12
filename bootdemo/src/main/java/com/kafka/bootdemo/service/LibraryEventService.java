@@ -7,6 +7,7 @@ import com.kafka.bootdemo.repository.LibraryEventRepository;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,12 +57,18 @@ public class LibraryEventService {
 
     private LibraryEvent update(LibraryEvent libraryEvent) {
         if (libraryEvent.getLibraryEventId() == null) throw new IllegalArgumentException("Id not provided");
+        if (libraryEvent.getLibraryEventId() == 0)
+            throw new IllegalArgumentException("For testing specific retry policies");
 
         LibraryEvent updates = repository.findById(libraryEvent.getLibraryEventId()).map(l -> {
             l.getBook().setBookName(libraryEvent.getBook().getBookName());
             l.getBook().setBookAuthor(libraryEvent.getBook().getBookAuthor());
             return l;
-        }).orElseThrow(() -> new IllegalArgumentException("Cannot find library event for the given id: " + libraryEvent.getLibraryEventId()));
+        }).orElseThrow(() ->
+                // check ConfigHelper.simpleRetryPolicy() for retry logic
+                // new IllegalArgumentException("Cannot find library event for the given id: " + libraryEvent.getLibraryEventId()); // won't be retried
+                new RecoverableDataAccessException("Cannot find library event for the given id: " + libraryEvent.getLibraryEventId()) // will get retried 3 times
+        );
 
         LibraryEvent savedUpdates = repository.save(updates);
         log.info("Successfully saved updated library event: {}", savedUpdates);
