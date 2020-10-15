@@ -208,3 +208,14 @@ Imp: sample library event post body:
     }
 
 Notice that neither has any ID, (earlier, before introducing persistence, it did have id). Keeping id will lead to failures, or extra rows additions
+
+------------------------------------------------------------------------------------------------------------------------
+Recovery from exhausted retry attempts
+------------------------------------------------------------------------------------------------------------------------
+
+At the consumer side, when we have exhausted the number of times we configured for retry attempts,
+we will check if the consumed record is recoverable, if yes, we will try for recovery
+
+Two types of recovery is done generally:
+1. Produce a message to a dead letter topic, or the original topic, in which case, the message will go through the cycle from start again
+2. Produce a message to a recovery topic, which can be consumed by recovery specific consumers

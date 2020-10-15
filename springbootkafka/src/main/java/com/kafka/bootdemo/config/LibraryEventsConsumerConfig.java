@@ -1,11 +1,13 @@
 package com.kafka.bootdemo.config;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.kafka.ConcurrentKafkaListenerContainerFactoryConfigurer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
@@ -16,6 +18,7 @@ import static com.kafka.bootdemo.config.ConfigHelper.retryTemplate;
 
 @Configuration
 @EnableKafka
+@Log4j2
 public class LibraryEventsConsumerConfig {
 
     private final KafkaProperties properties = new KafkaProperties(); // contains application.yml configs
@@ -33,6 +36,16 @@ public class LibraryEventsConsumerConfig {
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
 
         factory.setRetryTemplate(retryTemplate());
+        factory.setRecoveryCallback((context -> {
+            if (context.getLastThrowable().getCause() instanceof RecoverableDataAccessException) {
+                log.info("Inside recoverable logic");
+                // recovery logic
+            } else {
+                log.info("Inside non recoverable logic");
+                throw new RuntimeException(context.getLastThrowable().getMessage());
+            }
+            return null;
+        }));
 
         return factory;
     }
