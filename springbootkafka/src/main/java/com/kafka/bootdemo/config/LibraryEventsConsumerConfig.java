@@ -1,7 +1,10 @@
 package com.kafka.bootdemo.config;
 
+import com.kafka.bootdemo.service.LibraryEventService;
 import lombok.extern.log4j.Log4j2;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.kafka.ConcurrentKafkaListenerContainerFactoryConfigurer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -23,6 +26,8 @@ public class LibraryEventsConsumerConfig {
 
     private final KafkaProperties properties = new KafkaProperties(); // contains application.yml configs
     private final int numOfPartions = 3;
+    @Autowired
+    LibraryEventService libraryEventService;
 
     // we want ack mode to be manual, so we need to override kafkaListenerContainerFactory from KafkaAnnotationDrivenConfiguration class
     @Bean
@@ -38,8 +43,15 @@ public class LibraryEventsConsumerConfig {
         factory.setRetryTemplate(retryTemplate());
         factory.setRecoveryCallback((context -> {
             if (context.getLastThrowable().getCause() instanceof RecoverableDataAccessException) {
-                log.info("Inside recoverable logic");
                 // recovery logic
+                log.info("Inside recoverable logic");
+                // Arrays.asList(context.attributeNames()).forEach(name -> {
+                //    log.info("Attribute name: {}", name); // record, consumer, context.exhausted
+                //    log.info("Attribute Value: {}", context.getAttribute(name));
+                // });
+                ConsumerRecord<Integer, String> record = (ConsumerRecord<Integer, String>) context.getAttribute("record");
+                libraryEventService.handleRecovery(record);
+
             } else {
                 log.info("Inside non recoverable logic");
                 throw new RuntimeException(context.getLastThrowable().getMessage());

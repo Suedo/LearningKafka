@@ -8,8 +8,12 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.RecoverableDataAccessException;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.util.List;
 
@@ -27,6 +31,9 @@ public class LibraryEventService {
 
     @Autowired
     BookService bookService;
+
+    @Autowired
+    KafkaTemplate<Integer, String> kafkaTemplate;
 
     public void processLibraryEvent(ConsumerRecord<Integer, String> consumerRecord) throws JsonProcessingException {
         LibraryEvent libraryEvent = objectMapper.readValue(consumerRecord.value(), LibraryEvent.class); // deserialize
@@ -74,5 +81,28 @@ public class LibraryEventService {
         log.info("Successfully saved updated library event: {}", savedUpdates);
         return savedUpdates;
 
+    }
+
+    public void handleRecovery(ConsumerRecord<Integer, String> record) {
+        Integer key = record.key();
+        String value = record.value();
+        ListenableFuture<SendResult<Integer, String>> result = kafkaTemplate.sendDefault(key, value);// recovery handling approach 1, send to producing topic
+
+        result.addCallback(new ListenableFutureCallback<SendResult<Integer, String>>() {
+            @Override
+            public void onFailure(Throwable ex) {
+                log.error("Error Sending message, Exception: {}", ex.getMessage());
+                try {
+                    throw ex;
+                } catch (Throwable throwable) {
+                    log.error("Error on failure");
+                }
+            }
+
+            @Override
+            public void onSuccess(SendResult<Integer, String> integerStringSendResult) {
+                log.info("Message sent successfully for key {} with value {}", key, value);
+            }
+        });
     }
 }
