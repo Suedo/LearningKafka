@@ -219,3 +219,27 @@ we will check if the consumed record is recoverable, if yes, we will try for rec
 Two types of recovery is done generally:
 1. Produce a message to a dead letter topic, or the original topic, in which case, the message will go through the cycle from start again
 2. Produce a message to a recovery topic, which can be consumed by recovery specific consumers
+
+------------------------------------------------------------------------------------------------------------------------
+Recovery method 1:
+sending error record to the original topic. This causes an infinite loop, as seen below,
+where we have 3 retry attempts, triggered by a `RecoverableDataAccessException`, and after 3 reties, it is followed by a recovery attempt
+the recovery attempt again causes the same exception, leading to retry attempts, as nothing is done to catch it.. and will go on infinitely
+------------------------------------------------------------------------------------------------------------------------
+
+2020-10-17 07:55:49.183  INFO 51297 --- [ad | producer-1] c.k.b.service.LibraryEventService        : Recovery Message sent successfully for key 11 with value {"libraryEventId":11,"type":"UPDATE","book":{"bookId":1,"bookName":"Kafka Using Spring Boot 2","bookAuthor":"Dilip S","libraryEvent":null}}
+
+2020-10-17 07:55:49.183  INFO 51297 --- [ntainer#0-0-C-1] .k.b.c.LibraryEventsConsumerManualOffset : Consumer Record: ConsumerRecord(topic = library-events, partition = 0, leaderEpoch = 0, offset = 1, CreateTime = 1602901549173, serialized key size = 4, serialized value size = 139, headers = RecordHeaders(headers = [], isReadOnly = false), key = 11, value = {"libraryEventId":11,"type":"UPDATE","book":{"bookId":1,"bookName":"Kafka Using Spring Boot 2","bookAuthor":"Dilip S","libraryEvent":null}})
+2020-10-17 07:55:49.183  INFO 51297 --- [ntainer#0-0-C-1] c.k.b.service.LibraryEventService        : LibraryEvent consumed: LibraryEvent(libraryEventId=11, type=UPDATE)
+Hibernate: select libraryeve0_.library_event_id as library_1_1_0_, libraryeve0_.book_id as book_id3_1_0_, libraryeve0_.type as type2_1_0_, book1_.book_id as book_id1_0_1_, book1_.book_author as book_aut2_0_1_, book1_.book_name as book_nam3_0_1_ from library_event libraryeve0_ left outer join book book1_ on libraryeve0_.book_id=book1_.book_id where libraryeve0_.library_event_id=?
+
+2020-10-17 07:55:51.188  INFO 51297 --- [ntainer#0-0-C-1] .k.b.c.LibraryEventsConsumerManualOffset : Consumer Record: ConsumerRecord(topic = library-events, partition = 0, leaderEpoch = 0, offset = 1, CreateTime = 1602901549173, serialized key size = 4, serialized value size = 139, headers = RecordHeaders(headers = [], isReadOnly = false), key = 11, value = {"libraryEventId":11,"type":"UPDATE","book":{"bookId":1,"bookName":"Kafka Using Spring Boot 2","bookAuthor":"Dilip S","libraryEvent":null}})
+2020-10-17 07:55:51.189  INFO 51297 --- [ntainer#0-0-C-1] c.k.b.service.LibraryEventService        : LibraryEvent consumed: LibraryEvent(libraryEventId=11, type=UPDATE)
+Hibernate: select libraryeve0_.library_event_id as library_1_1_0_, libraryeve0_.book_id as book_id3_1_0_, libraryeve0_.type as type2_1_0_, book1_.book_id as book_id1_0_1_, book1_.book_author as book_aut2_0_1_, book1_.book_name as book_nam3_0_1_ from library_event libraryeve0_ left outer join book book1_ on libraryeve0_.book_id=book1_.book_id where libraryeve0_.library_event_id=?
+
+2020-10-17 07:55:53.191  INFO 51297 --- [ntainer#0-0-C-1] .k.b.c.LibraryEventsConsumerManualOffset : Consumer Record: ConsumerRecord(topic = library-events, partition = 0, leaderEpoch = 0, offset = 1, CreateTime = 1602901549173, serialized key size = 4, serialized value size = 139, headers = RecordHeaders(headers = [], isReadOnly = false), key = 11, value = {"libraryEventId":11,"type":"UPDATE","book":{"bookId":1,"bookName":"Kafka Using Spring Boot 2","bookAuthor":"Dilip S","libraryEvent":null}})
+2020-10-17 07:55:53.192  INFO 51297 --- [ntainer#0-0-C-1] c.k.b.service.LibraryEventService        : LibraryEvent consumed: LibraryEvent(libraryEventId=11, type=UPDATE)
+Hibernate: select libraryeve0_.library_event_id as library_1_1_0_, libraryeve0_.book_id as book_id3_1_0_, libraryeve0_.type as type2_1_0_, book1_.book_id as book_id1_0_1_, book1_.book_author as book_aut2_0_1_, book1_.book_name as book_nam3_0_1_ from library_event libraryeve0_ left outer join book book1_ on libraryeve0_.book_id=book1_.book_id where libraryeve0_.library_event_id=?
+
+2020-10-17 07:55:53.194  INFO 51297 --- [ntainer#0-0-C-1] c.k.b.c.LibraryEventsConsumerConfig      : Inside recoverable logic
+2020-10-17 07:55:53.204  INFO 51297 --- [ad | producer-1] c.k.b.service.LibraryEventService        : Recovery Message sent successfully for key 11 with value {"libraryEventId":11,"type":"UPDATE","book":{"bookId":1,"bookName":"Kafka Using Spring Boot 2","bookAuthor":"Dilip S","libraryEvent":null}}

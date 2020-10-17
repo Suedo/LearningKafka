@@ -87,7 +87,6 @@ public class LibraryEventService {
         Integer key = record.key();
         String value = record.value();
         ListenableFuture<SendResult<Integer, String>> result = kafkaTemplate.sendDefault(key, value);// recovery handling approach 1, send to producing topic
-
         result.addCallback(new ListenableFutureCallback<SendResult<Integer, String>>() {
             @Override
             public void onFailure(Throwable ex) {
@@ -101,7 +100,7 @@ public class LibraryEventService {
 
             @Override
             public void onSuccess(SendResult<Integer, String> integerStringSendResult) {
-                log.info("Message sent successfully for key {} with value {}", key, value);
+                log.info("Recovery Message sent successfully for key {} with value {}", key, value);
             }
         });
     }
