@@ -1,0 +1,61 @@
+
+                    Kafka Security using SSL (TLS actually, but loosely still called SSL)
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+SSL setup Steps
+------------------------------------------------------------------------------------------------------------------------
+Course steps link:
+https://github.com/dilipsundarraj1/kafka-for-developers-using-spring-boot/blob/master/Kafka_Security.md
+
+1. Generate the `server.keystore.jks` file
+    // password used = ssldemo1
+    keytool -keystore server.keystore.jks -alias localhost -validity 365 -genkey -keyalg RSA
+
+    ^^ server.keystore.jks file is generated from above command
+
+    // see details of the generated keystore:
+    keytool -list -v -keystore server.keystore.jks
+
+
+2. Set up the local Certificate Authority
+
+    // generate local CA Cert
+    // PEM pass phrase: ssldemo1
+    openssl req -new -x509 -keyout ca-key -out ca-cert -days 365 -subj "/CN=local-security-CA"
+
+    ^^ ca-cert and ca-key files are generated from the above command
+    the ca-key is the private key, never share this
+
+
+3. Create the CSR (Certificate Signing Request)
+
+    // takes in the server.keystore.jks file, and generated a `cert-file` from it
+    keytool -keystore server.keystore.jks -alias localhost -certreq -file cert-file
+
+
+4. Sign the SSL certificate
+
+    // mimics the CA signing the CSR cert file, and generates a `cert-signed` file
+    openssl x509 -req -CA ca-cert -CAkey ca-key -in cert-file -out cert-signed -days 365 -CAcreateserial -passin pass:ssldemo1
+
+    // view contents of cert-signed file
+    keytool -printcert -v -file cert-signed
+
+
+5. Add the signed SSL certificate to the server.keystore file
+
+    keytool -keystore server.keystore.jks -alias CARoot -import -file ca-cert
+    keytool -keystore server.keystore.jks -alias localhost -import -file cert-signed
+
+    // generate the truststore
+    keytool -keystore client.truststore.jks -alias CARoot -import -file ca-cert
+
+
+
+6. Configure the SSL cert in our kafka broker
+
+
+7. Create the client.truststore.jks for the client

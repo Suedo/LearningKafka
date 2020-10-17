@@ -258,6 +258,8 @@ Error Handling and Retry in Producer
 In Sync Replica (ISR) using the "min.insync.replica" flag
 ------------------------------------------------------------------------------------------------------------------------
 
+More about ISR: https://www.cloudkarafka.com/blog/2019-09-28-what-does-in-sync-in-apache-kafka-really-mean.html
+
 We alter our library-events topic to have min.insync.replicas=2
 
 Course uses the alter command on an already up topic:
