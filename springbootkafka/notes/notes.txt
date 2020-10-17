@@ -256,7 +256,6 @@ Hibernate: select libraryeve0_.library_event_id as library_1_1_0_, libraryeve0_.
 ------------------------------------------------------------------------------------------------------------------------
 Error Handling and Retry in Producer
 In Sync Replica (ISR) using the "min.insync.replica" flag
-
 ------------------------------------------------------------------------------------------------------------------------
 
 We alter our library-events topic to have min.insync.replicas=2
@@ -298,3 +297,15 @@ NOW, to reproduce an error scenario:
     org.apache.kafka.common.errors.NotEnoughReplicasException: Messages are rejected since there are fewer in-sync replicas than required.
 
 ^^ this last line is the erroring out message, after 5 retries logged as `[Producer clientId=producer-1] Got error ... retrying (... attempts left)` above
+
+------------------------------------------------------------------------------------------------------------------------
+Ways to fix above error scenario
+(not implemented in course, but ideas given)
+------------------------------------------------------------------------------------------------------------------------
+
+1. Persist failed event records to db, and then try again
+2. Publish failed event record to recovery_topic, which will be listened upon by another consumer, which will do the necessary retries
+
+We have the failure handler method in LibraryEventProducer.java:
+    private void handleFailure(Integer key, String value, Throwable ex)
+^^ we can implement the logic (where to publish in case of error) in here.
