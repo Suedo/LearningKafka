@@ -165,6 +165,15 @@ https://stackoverflow.com/a/39709900/2715083
 Testing:
     When using lombok, rebuild project before testing as otherwise some generated getters and setters might not reflect in the test
 
+
+Kafka insync replicas, acks and meaning:
+https://www.cloudkarafka.com/blog/2019-09-28-what-does-in-sync-in-apache-kafka-really-mean.html
+
+    acks=all
+    Setting the ack value to all means that the producer gets an ack when all in-sync replicas have received the record.
+    The leader will wait for the full set of in-sync replicas to acknowledge the record. This means that it takes a longer time to
+    send a message with ack value all, but it gives the strongest message durability.
+
 ------------------------------------------------------------------------------------------------------------------------
 Kafka Producer Config
 ------------------------------------------------------------------------------------------------------------------------
@@ -243,3 +252,49 @@ Hibernate: select libraryeve0_.library_event_id as library_1_1_0_, libraryeve0_.
 
 2020-10-17 07:55:53.194  INFO 51297 --- [ntainer#0-0-C-1] c.k.b.c.LibraryEventsConsumerConfig      : Inside recoverable logic
 2020-10-17 07:55:53.204  INFO 51297 --- [ad | producer-1] c.k.b.service.LibraryEventService        : Recovery Message sent successfully for key 11 with value {"libraryEventId":11,"type":"UPDATE","book":{"bookId":1,"bookName":"Kafka Using Spring Boot 2","bookAuthor":"Dilip S","libraryEvent":null}}
+
+------------------------------------------------------------------------------------------------------------------------
+Error Handling and Retry in Producer
+In Sync Replica (ISR) using the "min.insync.replica" flag
+
+------------------------------------------------------------------------------------------------------------------------
+
+We alter our library-events topic to have min.insync.replicas=2
+
+Course uses the alter command on an already up topic:
+    ./kafka-configs.sh --alter --zookeeper localhost:2181 --entity-type topics --entity-name test-topic --add-config min.insync.replicas=2
+But, I have simply restarted the cluster, and created the topic afresh:
+    kafka-topics --create --topic library-events --bootstrap-server broker:9092 --replication-factor 3 --partitions 3 --config min.insync.replicas=2
+
+Modified the spring kafka producer config (in application.yml) properties to have 5 retry attempts, and seek acks from all ISRs
+  properties:
+    acks: all
+    retries: 5
+
+^^ What this does now, is when we try to produce a record, it will seek ack from all the ISR, in our case 2. In normal case, that works fine.
+
+NOW, to reproduce an error scenario:
+1. We "down" 2 out of the total 3 brokers that gets spun up during `docker-compose up`.
+2. Now we try to produce a record by hitting the `http://localhost:8899/v1/lib/add` endpoint
+3. Now, because of the `acks: all` config, the producer tries to get ack from 2 ISRs, as specified in the topic, but since we just have 1 broker, it fails
+4. It retries 5 times, and finally errors out, as seen in the log snippet below
+
+    2020-10-17 19:11:02.892  WARN 64031 --- [ad | producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=producer-1] Connection to node -2 (localhost/127.0.0.1:29093) could not be established. Broker may not be available.
+    2020-10-17 19:11:02.892  WARN 64031 --- [ad | producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=producer-1] Bootstrap broker localhost:29093 (id: -2 rack: null) disconnected
+    2020-10-17 19:11:02.903  WARN 64031 --- [ad | producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=producer-1] Connection to node -3 (localhost/127.0.0.1:29094) could not be established. Broker may not be available.
+    2020-10-17 19:11:02.904  WARN 64031 --- [ad | producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=producer-1] Bootstrap broker localhost:29094 (id: -3 rack: null) disconnected
+    2020-10-17 19:11:03.007  WARN 64031 --- [ad | producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=producer-1] Connection to node -3 (localhost/127.0.0.1:29094) could not be established. Broker may not be available.
+    2020-10-17 19:11:03.007  WARN 64031 --- [ad | producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=producer-1] Bootstrap broker localhost:29094 (id: -3 rack: null) disconnected
+    2020-10-17 19:11:03.134  INFO 64031 --- [ad | producer-1] org.apache.kafka.clients.Metadata        : [Producer clientId=producer-1] Cluster ID: jMt3FuTmTc6K3u3DfcEdTw
+    2020-10-17 19:11:03.230  WARN 64031 --- [ad | producer-1] o.a.k.clients.producer.internals.Sender  : [Producer clientId=producer-1] Got error produce response with correlation id 3 on topic-partition library-events-0, retrying (4 attempts left). Error: NOT_ENOUGH_REPLICAS
+    2020-10-17 19:11:03.338  WARN 64031 --- [ad | producer-1] o.a.k.clients.producer.internals.Sender  : [Producer clientId=producer-1] Got error produce response with correlation id 4 on topic-partition library-events-0, retrying (3 attempts left). Error: NOT_ENOUGH_REPLICAS
+    2020-10-17 19:11:03.449  WARN 64031 --- [ad | producer-1] o.a.k.clients.producer.internals.Sender  : [Producer clientId=producer-1] Got error produce response with correlation id 5 on topic-partition library-events-0, retrying (2 attempts left). Error: NOT_ENOUGH_REPLICAS
+    2020-10-17 19:11:03.562  WARN 64031 --- [ad | producer-1] o.a.k.clients.producer.internals.Sender  : [Producer clientId=producer-1] Got error produce response with correlation id 6 on topic-partition library-events-0, retrying (1 attempts left). Error: NOT_ENOUGH_REPLICAS
+    2020-10-17 19:11:03.672  WARN 64031 --- [ad | producer-1] o.a.k.clients.producer.internals.Sender  : [Producer clientId=producer-1] Got error produce response with correlation id 7 on topic-partition library-events-0, retrying (0 attempts left). Error: NOT_ENOUGH_REPLICAS
+    2020-10-17 19:11:03.787 ERROR 64031 --- [ad | producer-1] c.k.b.producer.LibraryEventProducer      : Error Sending message, Exception: Failed to send; nested exception is org.apache.kafka.common.errors.NotEnoughReplicasException: Messages are rejected since there are fewer in-sync replicas than required.
+    2020-10-17 19:11:03.788 ERROR 64031 --- [ad | producer-1] c.k.b.producer.LibraryEventProducer      : Error on failure
+    2020-10-17 19:11:03.790 ERROR 64031 --- [ad | producer-1] o.s.k.support.LoggingProducerListener    : Exception thrown when sending a message with key='null' and payload='{"libraryEventId":null,"type":"NEW","book":{"bookId":null,"bookName":"Kafka Using Spring Boot","book...' to topic library-events:
+
+    org.apache.kafka.common.errors.NotEnoughReplicasException: Messages are rejected since there are fewer in-sync replicas than required.
+
+^^ this last line is the erroring out message, after 5 retries logged as `[Producer clientId=producer-1] Got error ... retrying (... attempts left)` above

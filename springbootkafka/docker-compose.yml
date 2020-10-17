@@ -26,6 +26,8 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # https://www.cloudkarafka.com/blog/2019-09-28-what-does-in-sync-in-apache-kafka-really-mean.html
+#      MIN_INSYNC_REPLICAS: 2
 
 
   broker2:
@@ -43,6 +45,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker2:9093,PLAINTEXT_HOST://localhost:29093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+#      MIN_INSYNC_REPLICAS: 2
 
 
   broker3:
@@ -60,5 +63,6 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker3:9094,PLAINTEXT_HOST://localhost:29094
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+#      MIN_INSYNC_REPLICAS: 2
 
 # for a more exhaustive config, refer: https://github.com/confluentinc/cp-all-in-one
