@@ -4,7 +4,7 @@
 The `send()` methods all return a `ListenableFuture<SendResult<K,V>>` , where K and V are the types of the key and value being used.  
 Then use the `ListenableFuture` instance's `addCallback` method to add a callback function for Success and Failure scenarios
 
-From the `ListenableFuture` type, we understand that the above flow was `async` . If you want a synchronous flow, then call the `KafkaTemplate.sendDefault().**get()`** method. This one returns a `SendResult<K,V>` instead.
+From the `ListenableFuture` type, we understand that the above flow was `async` . If you want a synchronous flow, then call the `KafkaTemplate.sendDefault().get()` method. This one returns a `SendResult<K,V>` instead.
 
 Note: 
 
